@@ -1,6 +1,7 @@
 package co.draxler.greetingstreamsspringboot.topology;
 
 import co.draxler.greetingstreamsspringboot.domain.Greeting;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -11,21 +12,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.support.serializer.JsonSerde;
 import org.springframework.stereotype.Component;
 
-import java.util.Locale;
-
 @Component
 @Slf4j
 public class GreetingStreamsTopology {
-
+    private final ObjectMapper objectMapper;
     public static String GREETINGS = "greetings";
     public static String GREETINGS_OUT = "greetings_out";
+
+    public GreetingStreamsTopology(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     @Autowired
     public void process (StreamsBuilder streamsBuilder){
     var greetingsStream = streamsBuilder
             .stream(GREETINGS, Consumed.with(Serdes.String(),
 //                    Serdes.String())
-                        new JsonSerde<>(Greeting.class))
+                        new JsonSerde<>(Greeting.class,objectMapper))
             );
 
     greetingsStream
@@ -44,7 +47,7 @@ public class GreetingStreamsTopology {
 
     modifiedStream
 //            .to(GREETINGS_OUT, Produced.with(Serdes.String(),Serdes.String()));
-            .to(GREETINGS_OUT, Produced.with(Serdes.String(),new JsonSerde<>(Greeting.class))
+            .to(GREETINGS_OUT, Produced.with(Serdes.String(),new JsonSerde<>(Greeting.class,objectMapper))
             );
     }
 }
